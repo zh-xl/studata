@@ -1,0 +1,271 @@
+import re
+import os
+
+filename = "studata.txt"
+#主程序模块
+def main():
+    ctrl=True    #标记是否退出
+    while(ctrl):
+        menu()
+        option=input("请选择：")
+        option_str=re.sub("\D","",option)
+        if option_str in ["0","1","2","3","4","5","6","7"]:
+            option_int=int(option_str)
+            if option_int==0:
+                print("您已退出学生管理系统")
+                ctrl=False
+            elif option_int==1:#录入信息
+                insert()
+            elif option_int==2:#查询
+                search()
+            elif option_int==3:#删除
+                delete()
+            elif option_int==4:#修改
+                modify()
+            elif option_int==5:#排序
+                sort()
+            elif option_int==6:#统计
+                total()
+            elif option_int==7:#显示
+                show()
+#菜单模块
+def menu():
+    #输出菜单
+    print("""
+    +------------------学生信息管理系统------------------+
+    |         ===============功能==============          | 
+    |                                                    |
+    |         1      录入学生信息                        |
+    |         2      查找学生信息                        |
+    |         3      删除学生信息                        |
+    |         4      修改学生信息                        |
+    |         5      排序                                |
+    |         6      统计学生人数                        |
+    |         7      显示所有学生信息                    |
+    |         0      推出系统                            |
+    |                                                    |
+    |         =====通过数字或↑↓进行选择=====           |
+    +----------------------------------------------------+
+    
+    
+    """)
+
+#保存信息模块
+def save(student):
+    try:
+        student_txt=open(filename,"a")#以追加模式打开
+    except Exception as e :
+        student_txt=open(filename,"w")#文件不存在，创建文件并打开
+    for info in student:
+        student_txt.write(str(info)+"\n")#按行写入，添加换行符
+    student_txt.close()
+#录入信息模块
+def insert():
+    studentList=[]
+    mark=True
+    while mark:
+        id=input("请输入id（如1001）：")
+        # id为空退出
+        if not id :
+            break
+        name=input("请输入姓名：")
+        #名字为空退出
+        if not name:
+            break
+#捕获无效输入
+        try:
+            english=int(input("英语成绩："))
+            math1=int(input("数学成绩："))
+            Chinese=int(input("语文成绩："))
+        except:
+            print("输入无效，请重新录入")
+            continue
+        student={"id":id,"name":name,"english":english,"math":math1,"chinese":Chinese}#放入字典中，添加到学生列表
+        studentList.append(student)
+
+        inputMark=input("是否继续添加？（y/n）:")
+        if inputMark=="y":
+            mark=True
+        else:
+            mark=False#不再添加
+    save(studentList)
+    print("学生信息录入完毕")
+#删除信息功能
+def delete():
+
+    mark=True
+    while mark:
+        studentId=input("请输出要删除学生的ID：")
+        if studentId is not "":
+            if os.path.exists(filename):
+                with open(filename,'r')as rfile:
+                    student_old=rfile.readlines()
+            else:
+                student_old=[]
+            ifdel=False
+            if student_old:
+                with open(filename,"w") as wfile:
+                    d={}
+                    for list in student_old:
+                        d=dict(eval(list))
+                        if d["id"] !=studentId:
+                            wfile.write(str(d)+"\n")
+                        else:
+                            ifdel=True
+                    if ifdel:
+                        print("ID为 %s 的学生信息已被删除" %studentId)
+                    else:
+                        print("没有找到ID为 %s 的学生信息" %studentId)
+            else:
+                print("未选择学生信息")
+                break
+            show()
+            inputMark=input("是否继续删除？（y/n）:")
+            if inputMark=="y":
+                mark=True
+            else:
+                mark=False
+#修改功能
+def modify():
+    show()
+    if os.path.exists(filename):
+        with open(filename,"r") as rfile:
+            student_old=rfile.readlines()
+    else:
+        return
+    studentid=input("请输入要修改的学生id：")
+    with open(filename,"w") as wfile:
+        for student in student_old:
+            d=dict(eval(student))
+            if d["id"]==studentid:
+                print("检索到该学生，可以修改")
+                while True:
+                    try:
+                        d["name"]=input("请输入姓名")
+                        d["english"] = int(input("英语成绩："))
+                        d["math"] = int(input("数学成绩："))
+                        d['chinese'] = int(input("语文成绩："))
+                    except:
+                        print("输入有误请重新输入")
+                    else:
+                        break
+                student=str(d)
+                wfile.write(student+"\n")
+                print("修改成功！")
+            else:
+                wfile.write(student)
+    mark=input("是否继续修改其他学生信息？（y/n）")
+    if mark=="y":
+        modify()
+#查询功能
+def search():
+    mark=True
+    student_query=[]
+    while mark:
+        id=""
+        name=""
+        if os.path.exists(filename):
+            mode=input("按id查询输入1；按姓名查询输入2：")
+            if mode=="1":
+                id=input("请输入学生ID：")
+            elif mode=="2":
+                name=input("请输入学生姓名：")
+            else:
+                print("输入有误，请重新输入！")
+                search()
+            with open(filename,"r") as rfile:
+                student=rfile.readlines()
+                for list in student:
+                    d=dict(eval(list))
+                    if id is not "":
+                        if d["id"]==id:
+                            student_query.append(d)
+                    elif name is not "":
+                        if d["name"]==name:
+                            student_query.append(d)
+                show_student(student_query)
+                student_query.clear()
+                inputMark=input("是否继续查询？（y/n）:")
+                if inputMark=="y":
+                    mark=True
+                else:
+                    mark=False
+        else:
+            print("暂未保存数据信息")
+            return
+#显示学生信息功能
+def show_student(studentList):
+    if not studentList:
+        print("(o@.@o) 无数据信息 (o@.@o) \n")
+        return
+    format_titile="{:^6}{:^12}\t{:^8}\t{:^10}\t{:^10}\t{:^10}"
+    print(format_titile.format("ID","名字","英语成绩","数学成绩","语文成绩","总成绩"))
+
+    format_data="{:^6}{:^12}\t{:^12}\t{:^12}\t{:^12}\t{:^12}"
+    for info in studentList:
+        print(format_data.format(info.get("id"),info.get("name"),
+                                 str(info.get("english")),str(info.get("math")),
+                                 str(info.get("chinese")),
+                                 str(info.get("english")+info.get("math")+info.get("chinese")).center(12)))
+
+#统计功能
+def total():
+    if os.path.exists(filename):
+        with open(filename,"r") as rfile:
+            student_old=rfile.readlines()
+            if student_old:
+                print("共有%d 名学生！"%len(student_old))
+            else:
+                print("还未录入学生信息")
+    else:
+        print("暂未保存数据信息")
+#显示保存信息功能
+def show():
+    student_new=[]
+    if os.path.exists(filename):
+        with open(filename,"r") as rfile:
+            student_old=rfile.readlines()
+        for list in student_old:
+            student_new.append(eval(list))
+        if student_new:
+            show_student(student_new)
+    else:
+        print("暂未保存数据信息")
+#排序功能
+def sort():
+    show()
+    if os.path.exists(filename):
+        with open(filename,"r") as file:
+            student_old=file.readlines()
+            student_new=[]
+        for list in student_old:
+            d=dict(eval(list))
+            student_new.append(d)
+    else:
+        return
+    ascoRdesc=input("请选择（0升序；1降序）：")
+    if ascoRdesc=="0":
+        ascoRdescbool=False
+    elif ascoRdesc=="1":
+        ascoRdescbool=True
+    else:
+        print("输入有误，请重新输入！")
+        sort()
+    mode=input("请选择排序方式（1按英语，2按数学，3按语文，0 按总成绩）")
+    if mode=="1":
+        student_new.sort(key=lambda x:x["english"],reverse=ascoRdescbool)
+    elif mode=="2":
+        student_new.sort(key=lambda x: x["math"], reverse=ascoRdescbool)
+    elif mode=="3":
+        student_new.sort(key=lambda x: x["chinese"], reverse=ascoRdescbool)
+    elif mode=="0":
+        student_new.sort(key=lambda x: x["english"]+x["math"]+x["chinese"], reverse=ascoRdescbool)
+    else:
+        print("输入有误，请重新输入！")
+        sort()
+    show_student(student_new)
+
+
+if __name__=="__main__":
+    print("欢迎进入")
+    main()
